@@ -1,30 +1,65 @@
+"use client";
 import { Box, Button, Fab } from "@mui/material";
 import CoffeeMenu from "./components/CoffeeMenu";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import BillModal, { Product } from "./components/BillModal";
+import { useEffect, useState } from "react";
+import useProducts from "@/app/hooks/useProducts";
+import { useGet } from "@/app/hooks/useGet";
 
 const List = () => {
-  const coffeeItems = [
-    {
-      id: "1",
-      name: "Trà Xanh Espresso Marble",
-      price: 3.5,
-      image: "/img/espresso.png",
-    },
-    {
-      id: "2",
-      name: "Đường Đen Sữa Đá",
-      price: 4.5,
-      image: "/img/cf_sua_da.png",
-    },
-    {
-      id: "3",
-      name: "Bạc Xỉu",
-      price: 4.5,
-      image: "/img/bac_xiu.png",
-    },
-  ];
-  const handleAddToOrder = (oderItem: any) => {
-    console.log("oderItem", oderItem);
+  const {
+    data: productsList,
+    isLoading,
+    error,
+    refetch,
+  } = useGet<any>("/products");
+
+  const coffeeItems = productsList?.data;
+  useEffect(() => {}, [productsList]);
+
+  const [isOpenBill, setIsOpenBill] = useState<boolean>(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => {
+    console.log("111111", products);
+  }, [products]);
+  const handleAddToOrder = (orderItem: any) => {
+    console.log("orderItem", orderItem);
+
+    setProducts((prevProducts) => {
+      const existingProductIndex = prevProducts.findIndex(
+        (product) => product.productId === orderItem.productId
+      );
+
+      if (existingProductIndex >= 0) {
+        const updatedProducts = [...prevProducts];
+        updatedProducts[existingProductIndex] = {
+          ...updatedProducts[existingProductIndex],
+          quantity:
+            updatedProducts[existingProductIndex].quantity + orderItem.quantity,
+        };
+        return updatedProducts;
+      } else {
+        const newProduct: any = {
+          productId: orderItem.productId,
+          name: orderItem.name,
+          price: orderItem.totalPrice,
+          quantity: orderItem.quantity,
+        };
+
+        return [...prevProducts, newProduct];
+      }
+    });
+  };
+
+  const handleConfirm = (remainingProducts: Product[]) => {
+    setProducts(remainingProducts);
+  };
+
+  const handleRemoveProduct = (productId: number | string) => {
+    setProducts((prevProducts) =>
+      prevProducts.filter((product) => product.productId !== productId)
+    );
   };
   return (
     <Box sx={{ maxWidth: "1000px", margin: "auto", pt: 5 }}>
@@ -40,7 +75,7 @@ const List = () => {
         <Fab
           color="primary"
           aria-label="Your Order"
-          onClick={() => alert("View your order")}
+          onClick={() => setIsOpenBill(true)}
           sx={{
             // Optional custom styling
             width: 56,
@@ -53,6 +88,15 @@ const List = () => {
         >
           <AssignmentIcon />
         </Fab>
+        {isOpenBill && (
+          <BillModal
+            open={isOpenBill}
+            onClose={() => setIsOpenBill(false)}
+            products={products}
+            onConfirm={handleConfirm}
+            onRemove={handleRemoveProduct}
+          />
+        )}
       </Box>
     </Box>
   );

@@ -1,3 +1,4 @@
+"use client";
 import {
   Card,
   CardMedia,
@@ -14,9 +15,10 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
+import { formatVND } from "@/lib/helper";
 
 interface CoffeeItem {
-  id: string;
+  productId: string;
   name: string;
   price: number;
   image: string;
@@ -26,10 +28,10 @@ interface CoffeeItem {
 interface CoffeeMenuProps {
   items: CoffeeItem[];
   onOrderConfirm?: (orderData: {
-    id: string;
-    productName: string;
+    productId: string;
+    name: string;
     quantity: number;
-    totalPrice: number;
+    totalPrice: any;
   }) => void;
   sx?: React.CSSProperties;
 }
@@ -68,15 +70,13 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
     }
   };
 
-  const totalPrice = selectedItem
-    ? (selectedItem.price * quantity).toFixed(2)
-    : "0.00";
+  const totalPrice = selectedItem ? selectedItem.price * quantity : 0;
 
   return (
     <>
       <Grid container spacing={4} sx={{ padding: 3 }}>
-        {items.map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item.id}>
+        {items?.map((item, index) => (
+          <Grid key={index} item xs={12} sm={6} md={4}>
             <Card
               sx={{
                 height: "100%",
@@ -129,7 +129,7 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
                     fontSize: "1.2rem",
                   }}
                 >
-                  ${item.price.toFixed(2)}
+                  {formatVND(item.price)}
                 </Typography>
                 {item.isVegan && (
                   <Chip
@@ -201,7 +201,7 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
           >
             <Typography variant="h6">Total:</Typography>
             <Typography variant="h6" fontWeight="bold">
-              ${totalPrice}
+              ${formatVND(totalPrice)}
             </Typography>
           </Box>
           <Button
@@ -211,11 +211,13 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
             sx={{ mt: 3 }}
             onClick={() => {
               if (selectedItem && onOrderConfirm) {
+                console.log("selectedItem", selectedItem);
+
                 onOrderConfirm({
-                  id: selectedItem.id,
-                  productName: selectedItem.name,
+                  productId: selectedItem.productId,
+                  name: selectedItem.name,
                   quantity: quantity,
-                  totalPrice: parseFloat(totalPrice),
+                  totalPrice: totalPrice,
                 });
               }
               handleClose();
