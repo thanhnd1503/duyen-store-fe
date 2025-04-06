@@ -12,6 +12,7 @@ import {
   IconButton,
   TextField,
   Divider,
+  Stack,
 } from "@mui/material";
 import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
@@ -22,7 +23,7 @@ interface CoffeeItem {
   name: string;
   price: number;
   image: string;
-  isVegan?: boolean;
+  stock: number;
 }
 
 interface CoffeeMenuProps {
@@ -32,6 +33,7 @@ interface CoffeeMenuProps {
     name: string;
     quantity: number;
     totalPrice: any;
+    price: number;
   }) => void;
   sx?: React.CSSProperties;
 }
@@ -64,10 +66,17 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
   };
 
   const handleQuantityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    if (value > 0) {
-      setQuantity(value);
+    const value = event.target.value === "" ? 0 : parseInt(event.target.value);
+
+    if (isNaN(value)) {
+      setQuantity(1);
+      return;
     }
+
+    const max = selectedItem?.stock || 100;
+    const clampedValue = Math.min(Math.max(value, 1), max);
+
+    setQuantity(clampedValue);
   };
 
   const totalPrice = selectedItem ? selectedItem.price * quantity : 0;
@@ -120,28 +129,31 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
                 >
                   {item.name}
                 </Typography>
-                <Typography
-                  variant="body1"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 700,
-                    color: "primary.main",
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  {formatVND(item.price)}
-                </Typography>
-                {item.isVegan && (
-                  <Chip
-                    label="Vegan"
-                    color="success"
-                    size="small"
+                <Stack direction="row" justifyContent={"space-between"}>
+                  <Typography
+                    variant="body1"
+                    gutterBottom
                     sx={{
-                      alignSelf: "flex-start",
-                      mb: 2,
+                      fontWeight: 700,
+                      color: "primary.main",
+                      fontSize: "1.2rem",
                     }}
-                  />
-                )}
+                  >
+                    {formatVND(item.price)}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    gutterBottom
+                    sx={{
+                      fontWeight: 700,
+                      color: "primary.main",
+                      fontSize: "1.2rem",
+                    }}
+                  >
+                    SL: {item.stock}
+                  </Typography>
+                </Stack>
+
                 <Button
                   variant="contained"
                   fullWidth
@@ -188,7 +200,7 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
               type="number"
               value={quantity}
               onChange={handleQuantityChange}
-              inputProps={{ min: 1 }}
+              inputProps={{ min: 1, max: selectedItem?.stock }}
               size="small"
               sx={{ width: 80 }}
             />
@@ -211,13 +223,12 @@ const CoffeeMenu = ({ items, onOrderConfirm }: CoffeeMenuProps) => {
             sx={{ mt: 3 }}
             onClick={() => {
               if (selectedItem && onOrderConfirm) {
-                console.log("selectedItem", selectedItem);
-
                 onOrderConfirm({
                   productId: selectedItem.productId,
                   name: selectedItem.name,
                   quantity: quantity,
                   totalPrice: totalPrice,
+                  price: selectedItem.price,
                 });
               }
               handleClose();
