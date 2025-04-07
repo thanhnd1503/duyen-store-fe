@@ -6,6 +6,8 @@ import BillModal, { Product } from "./components/BillModal";
 import { useEffect, useState } from "react";
 import { useGet } from "@/app/hooks/useGet";
 import { usePost } from "@/app/hooks/usePost";
+import { Payment } from "@mui/icons-material";
+import PaymentModal from "./components/PaymentModal";
 
 const List = () => {
   // const {
@@ -34,6 +36,7 @@ const List = () => {
   useEffect(() => {}, [productsList]);
 
   const [isOpenBill, setIsOpenBill] = useState<boolean>(false);
+  const [isOpenPayment, setIsOpenPayment] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState<number>(0);
 
@@ -78,7 +81,7 @@ const List = () => {
         await addProduct("/orders", createOrderData, {
           onSuccess: (data) => {
             setProducts([]);
-            // Sau khi thêm thành công, làm mới danh sách sản phẩm
+            setIsOpenPayment(true);
             refetchProducts();
           },
           onError: (error) => {
@@ -155,6 +158,12 @@ const List = () => {
             onConfirm={handleConfirm}
             onRemove={handleRemoveProduct}
             onCancle={handleCancle}
+          />
+        )}
+        {isOpenPayment && (
+          <PaymentModal
+            open={isOpenPayment}
+            onClose={() => setIsOpenPayment(false)}
           />
         )}
       </Box>
